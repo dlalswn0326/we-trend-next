@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# We-Trend: AI-Based IT Trend Platform
+
+This project is a Next.js 14 application that aggregates and summarizes IT/AI news using Google Gemini.
+
+## Features
+- **Daily AI Summaries**: Auto-fetches news from GNews/Naver and summarizes them in SNS style.
+- **Community**: Users can write posts, like, comment, and bookmark.
+- **Tech Stack**: Next.js 14 (App Router), TypeScript, Tailwind CSS, Supabase, Vercel.
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone & Install**
+   ```bash
+   git clone <repo>
+   cd wenners-next
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Environment Setup**
+   Copy `env.example` to `.env.local` and fill in the keys.
+   ```bash
+   cp env.example .env.local
+   ```
+   Required Keys:
+   - Supabase URL & Anon Key & Service Role Key
+   - Google AI API Key (Gemini)
+   - GNews API Key
+   - Naver Client ID & Secret
+   - `CRON_SECRET` (For Vercel Cron security)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Database Setup**
+   - Run the SQL queries in `supabase/schema.sql` in your Supabase SQL Editor.
+   - Create a user with display_name "We-Trend AI" manually or via Sign Up to serve as the system bot.
+   - Note the ID of this user and update `app/api/fetch-news/route.ts` if needed (currently it searches for "We-Trend AI").
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **Run Locally**
+   ```bash
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Vercel Deployment
 
-## Learn More
+1. **Push to GitHub**.
+2. **Import in Vercel**.
+3. **Environment Variables**: Add all variables from `.env.local` to Vercel Project Settings.
+4. **Deploy**.
 
-To learn more about Next.js, take a look at the following resources:
+## Vercel Cron (Auto News)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The `vercel.json` file configures the Cron job to run daily.
+- Endpoint: `/api/fetch-news`
+- Ensure `CRON_SECRET` is set in Vercel Environment Variables.
