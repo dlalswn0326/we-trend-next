@@ -17,12 +17,19 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
+  const [loadedPostIds, setLoadedPostIds] = useState<Set<string>>(new Set())
   const observerTarget = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   // Initial load
   useEffect(() => {
     const fetchInitialData = async () => {
+      // Reset all states
+      setPosts([])
+      setLoadedPostIds(new Set())
+      setOffset(0)
+      setHasMore(true)
+
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
 
@@ -74,14 +81,17 @@ export default function Home() {
       .range(currentOffset, currentOffset + POSTS_PER_PAGE - 1)
 
     if (data) {
+      // Fetch user fresh to avoid stale closure
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+
       let userLikes: string[] = []
       let userBookmarks: string[] = []
 
-      if (user) {
-        const { data: lu } = await supabase.from('likes').select('post_id').eq('user_id', user.id)
+      if (currentUser) {
+        const { data: lu } = await supabase.from('likes').select('post_id').eq('user_id', currentUser.id)
         if (lu) userLikes = lu.map(l => l.post_id)
 
-        const { data: bu } = await supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+        const { data: bu } = await supabase.from('bookmarks').select('post_id').eq('user_id', currentUser.id)
         if (bu) userBookmarks = bu.map(b => b.post_id)
       }
 
@@ -93,7 +103,12 @@ export default function Home() {
         user_has_bookmarked: userBookmarks.includes(post.id)
       }))
 
-      setPosts(prev => [...prev, ...mappedPosts])
+      // Filter out duplicates
+      const newPosts = mappedPosts.filter(post => !loadedPostIds.has(post.id))
+      const newIds = new Set([...loadedPostIds, ...newPosts.map(p => p.id)])
+
+      setLoadedPostIds(newIds)
+      setPosts(prev => [...prev, ...newPosts])
       setOffset(currentOffset + POSTS_PER_PAGE)
       setHasMore(data.length === POSTS_PER_PAGE)
     } else {
